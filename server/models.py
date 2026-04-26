@@ -48,16 +48,33 @@ class Post(db.Model):
 	updated_at = db.Column(db.DateTime, onupdate=db.func.now())
 
 	# Add validators  
-	@validates()
-	def validate_post(self, title, content, category, summary):
-		pass
-		# check for post content >= 250 characters
+	@validates('content', 'category', 'summary', 'title')
+	def validate_post(self, key, value):
 
-		# check for post summary <= 250 characters
+		if key == 'title':
+			# check that post title has one of the following: "Won't Believe", "Secret", "Top", "Guess"
+			if not value:
+				raise ValueError("Title is required.")
+			
+			if not any(phrase in value for phrase in ["Won't Believe", "Secret", "Top", "Guess"]):
+				raise ValueError("Title must be clickbait-y.")
 
-		# check for post category being either fiction or non-fiction
+		elif key == 'content':
+			# check for post content >= 250 characters
+			if value is None or len(value) < 250:
+				raise ValueError("Post content must be at least 250 characters long.")
 
-		# check that post title has one of the following: "Won't Believe", "Secret", "Top", "Guess"
+		elif key == 'summary':
+			# check for post summary <= 250 characters
+			if value is not None and len(value) > 250:
+				raise ValueError("Post summary must be less than 250 characters.")
+
+		elif key == 'category':
+			# check for post category being either fiction or non-fiction
+			if value not in ["Fiction", "Non-Fiction"]:
+				raise ValueError("Category must be either Fiction or Non-Fiction.")
+
+			return value
 
 	def __repr__(self):
 		return f'Post(id={self.id}, title={self.title} content={self.content}, summary={self.summary})'
